@@ -104,10 +104,10 @@ class Blockchain(object):
         self.add_block(new_block)
 
     def latest_block(self):
-        return self.chain[-1]
+        return self.chain[-1]'''
 Класс блока выглядит следующим образом:
 
-python
+'''python
 class Block(object):
     def __init__(self, index, previous_hash, timestamp, data):
         self.index = index
@@ -122,10 +122,10 @@ class Block(object):
 
     def calculate_hash(self):
         block_string = str(str(self.index) + self.previous_hash + str(self.timestamp) + self.data).encode()
-        return hashlib.sha256(block_string).hexdigest()
+        return hashlib.sha256(block_string).hexdigest()'''
 Далее пройдемся по коду узлов сети, к которым будут идти обращения.
 
-python
+'''python
 @app.route('/blocks', methods=['GET'])
 def get_blocks():
     chain_data = []
@@ -183,4 +183,93 @@ def consensus():
     if blockchain.resolve_conflicts():
         return jsonify({'message': 'Chain updated'})
     else:
-        return jsonify({'message': 'Chain is not behind'}), 201
+        return jsonify({'message': 'Chain is not behind'}), 201'''
+
+Начнем с узла /blocks. Откроем терминал и запустим сервер следующей
+командой с указанием порта.
+https://media/image1.png
+
+Далее в другом терминале отправим запрос для просмотра текущей цепи
+блокчейна и увидим блок генезиса в ответе.
+https://media/image2.png
+
+Попробуем добавить новый блок путем обращения к узлу /mineBlock.
+https://media/image3.png
+
+Как видно, пришло сообщение о том, что в цепь добавлен новый блок.
+Теперь, если заново обратиться к узлу /blocks, мы увидим уже два блока в
+цепочке.
+https://media/image4.png
+
+Узды /updateChain и /updatePeers являются "служебными" и нужны для
+реализовывания алгоритма консенсуса, вызываются они самостоятельно из
+других узлов, поэтому не будет рассматривать их вызов отдельно. Перейдем
+к узлу /addPeer, добавив новый участок сети, предварительно запустив
+сервер на другом терминале с другим портом.
+https://media/image5.png
+
+Добавим новый участок сети.
+https://media/image6.png
+
+Теперь обратимся к узлу /peers, чтобы убедиться в том, что код отработал
+корректно.
+https://media/image7.png
+
+Рассмотрим работу алгоритма консенсуса уже в следующем разделе.
+
+### Реализация блокчейна с Proof-of-Work
+Поскольку в данной работе в качестве протокола достижения консенсуса был
+выбран алгоритм Proof-of-Work, расскажем о нем подробнее. Доказательство
+выполнения работы (PoW) – принцип защиты сетевых систем, идея которого
+заключается в том, что необходимо усложнить клиенту доступ к обращениям
+на сервер. Для этого при каждом обращении к серверу клиент должен
+предоставить результат выполнения некоторой длительной работы, результат
+которой при этом легко и быстро проверяется на стороне сервера.
+
+Впервые данный алгоритм был предствлен в 1993 году. А в 1997 году при
+запуске проекта Hashcash задача суть алгоритма заключалась в том, чтобы
+найти такое значение X, хеш которого содержал хотя бы N старших нулевых
+цифр. Позже данной идеей воспользовался и создатель биткойна.
+
+В данной курсовой работе алгоритм заключается в том, чтобы найти такое
+простое число X, что N первые цифр хэша образовывали бы также простое
+число. Приведем измененный код алгоритма майнинга, полный код итогового
+решения представлен в приложении 1.
+
+'''python
+def mine_block(self, data):
+    new_block = Block(len(self.chain), self.chain[-1].our_hash, time(), data, self.difficulty, 0)
+    nonce = 1
+    while True:
+        prime = True
+        for i in range(2, nonce // 2 + 1):
+            if nonce % i == 0:
+                prime = False
+                nonce += 1
+                break
+        if not prime:
+            continue
+        num = int(new_block.our_hash[:self.difficulty], 16)
+        new_block.nonce = nonce
+        new_block.our_hash = new_block.calculate_hash()
+        for i in range(2, num // 2 + 1):
+            if num % i == 0:
+                prime = False
+                nonce += 1
+                break
+        if prime and new_block.our_hash[0] != '0':
+            self.add_block(new_block)
+            break'''
+Рассмотрим теперь работу алгоритма консенсуса. Для этого запустим два
+сервера в разных терминалах, указав одному из них о наличии другого
+узла.
+https://media/image8.png
+https://media/image9.png
+https://media/image10.png
+
+Обратимся к узлу /mineBlock второго сервера и увидим, что первый также
+получает информацию о добыче нового блока и добавляет его себе в цепь.
+https://media/image11.png
+
+Таким образом, мы получили рабочий блокчейн с реализованным алгоритмом
+консенсуса.
