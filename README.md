@@ -104,7 +104,8 @@ class Blockchain(object):
         self.add_block(new_block)
 
     def latest_block(self):
-        return self.chain[-1]```
+        return self.chain[-1]
+```
 Класс блока выглядит следующим образом:
 
 ```python
@@ -122,7 +123,8 @@ class Block(object):
 
     def calculate_hash(self):
         block_string = str(str(self.index) + self.previous_hash + str(self.timestamp) + self.data).encode()
-        return hashlib.sha256(block_string).hexdigest()```
+        return hashlib.sha256(block_string).hexdigest()
+```
 Далее пройдемся по коду узлов сети, к которым будут идти обращения.
 
 ```python
@@ -183,7 +185,8 @@ def consensus():
     if blockchain.resolve_conflicts():
         return jsonify({'message': 'Chain updated'})
     else:
-        return jsonify({'message': 'Chain is not behind'}), 201```
+        return jsonify({'message': 'Chain is not behind'}), 201
+```
 
 Начнем с узла /blocks. Откроем терминал и запустим сервер следующей
 командой с указанием порта.
@@ -259,7 +262,8 @@ def mine_block(self, data):
                 break
         if prime and new_block.our_hash[0] != '0':
             self.add_block(new_block)
-            break```
+            break
+```
 Рассмотрим теперь работу алгоритма консенсуса. Для этого запустим два
 сервера в разных терминалах, указав одному из них о наличии другого
 узла.
